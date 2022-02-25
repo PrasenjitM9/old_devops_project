@@ -1,0 +1,159 @@
+---
+- hosts: "|| variable_host | default('app') }}"
+  gather_facts: yes
+  vars:
+    base_dir: 'E:'
+    backup: 'E:\devops-backup'
+
+vars_prompt:
+
+  - name: AdminAPI_version
+    prompt: enter the version of the adminAPI module
+    private: no
+    default: 1.0.0.213
+
+  - name: AdminUI_version
+    prompt: enter the version of the UI module
+    private: no
+    default: 1.0.0.502
+
+  - name: AuthenticationAPI_version
+    prompt: enter the version of the AuthenticationAPI module
+    private: no
+    default: 1.0.0.19
+
+  - name: MediaAPI_version
+    prompt: enter the version of the MediaAPI module
+    private: no
+    default: 39
+
+  - name: LoggerAPI_version
+    prompt: enter the version of the LoggerAPI module
+    private: no
+    default: 39
+  
+  - name: LoggerUI_version
+    prompt: enter the version of the LoggerUI module
+    private: no
+    default: 39
+
+  - name: RcmBillingAPI_version
+    prompt: enter the version of the RCM BillingAPI module
+    private: no
+    default: 1.0.0.8
+
+  - name: PasmpiAPI_version
+    prompt: enter the version of the PASADT module
+    private: no
+    default: 1.0.0.2
+
+  - name: RcmCashAPI_version
+    prompt: enter the version of the CashAPI module
+    private: no
+    default: 1.0.0.1
+
+  - name: ReportAI_version
+    prompt: enter the version of the ReportAPI module
+    private: no
+    default: 1.0.0.4
+  
+  - name: CommonAPI_version
+    prompt: enter the version of the CommonAPI module
+    private: no
+    default: 1.0.0.2
+  
+  - name: FormulabuilderAPI_version
+    prompt: enter the version of the FormulaBuilderAPI module
+    private: no
+    default: 1.0.0.2
+  
+  - name: ClaimAI_version
+    prompt: enter the version of the ClaimAPI module
+    private: no
+    default: 1.0.0.3
+  
+  - name: RcmMasterAPI_version
+    prompt: enter the version of the RcmMasterAPI module
+    private: no
+    default: 1.0.0.2
+
+    ---
+    
+  - name: RcmProfessionalFee_version
+    prompt: enter the version of the RcmProfessionalFee module
+    private: no
+    default: 1.0.0.2
+
+  - name: Library_version
+    prompt: enter the version of the Library module
+    private: no
+    default: 1.0.0.47
+
+  - name: MycareUI_version
+    prompt: enter the version of the Mycare UI module
+    private: no
+    default: 1.0.0.5
+  
+  - name: FormulaBuilderUI_version
+    prompt: enter the version of the Formula Builder UI Module
+    private: no
+    default: 1.0.0.2
+  
+  - name: ReportUI_version
+    prompt: enter the version of the Report UI module
+    private: no
+    default: 1.0.0.3
+
+  - name: DB_server_tye
+    prompt: enter the version of the Queue Logger Workflow Engine module
+    private: no
+    default: 86
+
+  - name: WorkflowAI_version
+    prompt: enter the version of the WorkflowAI module
+    private: no
+    default: 1.0.0.146
+
+  - name: UIReport_version
+    prompt: enter the version of the UIReport module
+    private: no
+    default: 1.0.0.77
+  
+  - name: DB_server_tye
+    prompt: enter the DB_server type Oracle or MSSQL
+    private: no
+    default: MSSQL
+
+  - name: DB_server_tye
+    prompt: enter the DB_server type Oracle or MSSQL
+    private: no
+    default: MSSQL
+
+  - name: DB_Connection_String
+    prompt: enter the DB Connection String
+    default: Server-10.230.38.41;Database=CMC_DRF_Admin;User ID=mycareuser;Password=mycare@123;
+
+roles:
+ - { role: environmentSetup, tags: 'environmentSetup' }
+ - { role: adminUI, tags: 'adminUI' }
+ - { role: adminAPI, tags: 'adminAPI' }
+ - { role: authenticationapi, tags: 'authenticationapi' }
+ - { role: authorizatioinaapi, tags: 'authorizationapi' }
+ - { role: mediaapi, tags: 'mediaapi' }
+ - { role: loggerapi, tags: 'loggerapi' }
+ - { role: loggerapi, tags: 'loggerUI' }
+ - { role: rcmbillingapi, tags: 'rcmbillingapi' }
+ - { role: reportapi, tags: 'reportapi' }
+ - { role: commonapi, tags: 'comminapi' }
+ - { role: formulabuilderapi, tags: 'formulabuilderapi' }
+ - { role: claimapi, tags: 'claimapi' }
+ - { role: rcmmasterapi, tags: 'rcmmasterapi' }
+ - { role: rcmprofessionalfeeapi, tags: 'rcmprofessionalfeeapi' }
+ - { role: library, tags: 'library' }
+ - { role: mycareUI, tags: 'mycareUI' }
+ - { role: formulabuilderUI, tags: 'formulabuilderUI' }
+ - { role: reportUI, tags: 'reportUI' }
+ - { role: loggerworkflow, tags: 'loggerworkflow' }
+ - { role: workflowapi, tags: 'workflowapi' }
+ - { role: uireport, tags: 'uireport' }
+ - { role: my, tags: 'mycareUI' }

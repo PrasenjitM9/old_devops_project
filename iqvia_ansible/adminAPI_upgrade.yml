@@ -1,0 +1,22 @@
+---
+- hosts: "{{ variable_host | default('all') }}"
+  gather_facts: yes
+  vars:
+    base_dir: 'E:'
+    backup: 'E:\devops-backup'
+    DB_server_type: 'MSSQL'
+    ui_port: 8000
+    DB_Connection_String: Server=10.230.38.41;Database=CMC_DRF_Admin;User ID=mycareuser;Password=mycare@123;
+
+vars_prompt:
+  - name: AdminAPI_version
+    prompt: enter the version of the AdminAPI module
+    private: no
+    default: 1.0.0.213
+
+tasks:
+  - name: calling adminAPI role
+    import_role:
+      name: adminAPI
+      tasks_from: upgrade.yml
+    tags: adminAPI

@@ -1,0 +1,16 @@
+api_name: UIReport
+api_port: 8080
+api_version: "{{ UIReport_version }}"
+nexus_url: 'https://nexusdevops.dimensions-healthcare.net/repository/DevOps-Release/com/iqvia/mycare/AdminAPI/{{ UIReport_version }}
+          /AdminAPI-{{ UIReport_version }}-SNAPSHOT.gz'
+
+root_url: api
+api_evn: |
+  Add-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST/{{ api_name }}' -filter "system.webServer/aspNetCore/
+  environmentVaribles" -name "." -value @{name='ConnectionStrings_AdminDBConnection'; value='{{ DB_Connection_String }}'}
+
+  Add-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST/{{ api_name }}' -filter "system.webServer/aspNetCore/
+  environmentVaribles" -name "." -value @{name='ConnectionStrings_DBProvider';value='{{ DB_server_type }}'}
+
+  Add-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST/{{ api_name }}' -filter "system.webServer/aspNetCore/
+  environmentVaribles" -name "." -value @{name='ASPNETCORE_ENVIRONMENT'; value='{{ 'AHD Dev' }}'}

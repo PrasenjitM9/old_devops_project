@@ -1,0 +1,117 @@
+- name: Creating myCARE directory inside {{ base_dir }} directory
+  win_file:
+    path: '{{ base_dir }}\myCARE'
+    state: directory
+  ignore_errors: true 
+
+- name: Creating Application Pool for {{ api_name }}
+  win_iis_webapppool:
+    name: "{{ api_name }}"
+    state: started
+    attributes:
+      manageRuntimeVersion: ""
+  ignore_errors: true 
+
+- name: Creating {{ api_name }} directory inside {{ base_dir }}\myCARE directory
+  win_file:
+    path: '{{ base_dir }}\myCARE\{{ api_name }}'
+    state: directory
+  tags: "{{ api_name }}"
+  ignore_errors: true 
+
+- name: Adding IIS site for {{ api_name }}
+  win_iis_website:
+    name: "{{ api_name }}"
+    state: started
+    port: "{{ api_port }}"
+    application_pool: "{{ api_name }}"
+    physical_path: '{{ base_dir }}\myCARE\{{ api_name }}'
+  tags: "{{ api_name }}"
+
+-  name: Downloading {{ api_name }} tar ball
+  win_get_url:
+    url: "{{ nexus_url }}"
+    dest: '{{ backup }}\'
+    url_username: "{{ nexus_username }}"
+    url_password: "{{ nexus_password }}"
+  tags: "{{ api_name }}"
+  register: download
+
+- block:
+  - name: extracting archive using 7z
+    win_command: "{{ item }}"
+    win_items:
+      - 7z x -y "{{ backup }}\{{ api_name }}-{{ api_version}}-SNAPSHOT.gz" -o"{{ backup }}\{{ api_name }}\"
+      - 7z x -y "{{ backup }}\{{ api_name }}\{{ api_name }}-{{ api_version }}-SNAPSHOT" -o"{{ backup }}\{{ api_name }}\"
+    tags: extract
+
+  - name: deleting the tar file
+    win_file
+      name: "{{ item }}"
+      state: absent
+    with_items:
+          {{ backup }}\{{ api_name }}-{{ api_version }}-SNAPSHOT.gz
+      - '{{ backup }}\{{ api_name }}\{{ api_name }}-{{ api_version }}-SNAPSHOT'
+
+  - name: Copying extracted files to "{{ base_dir }}\myCARE\{{ api_name }}" folder
+    win_shell: cp {{ backup }}\{{ api_name }}\publish\* {{ base_dir }}\myCARE\{{ api_name }} -Force -Recurse
+  
+  - name: Removing extracted {{ api_name }} folder
+    win_shell: Remove-Item -R -Path {{ backup }}\{{ api_name }}
+
+  - name: Chaning permissions for IIS_IUSRS
+    win_acl:
+      path: '{{ base_dir }}\myCARE'
+      user: IIS_IUSRS
+      rights: FullControl
+      type: allow
+      state: present
+      inherit: ContainerInherit, ObjectInherit
+      propagation: 'None'
+
+  - name: Changing webconfig for creating logs
+    win_shell: Set-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST/{{ api_name }}' -filter "sytem.webServer"
+
+  - name: Creating logs directory inside {{ api_name }} folder
+    win_file:
+      path: '{{ base_dir }}\myCARE\{{ api_name }}\logs'
+      state: directory
+  - name: Adding Environment Variable for {{ api_name}} Module
+    win_shell: "{{ api_env }}"
+
+  - name: Adding Rewrite URK to UI
+    win_shell: |
+      $api_in = '^{{ root_url }}/(.*)'
+      $api_out = 'http://localhost:{{ api_port }}/{R:O}'
+      $site = ''IIS:\Sites\UI'
+      $root = 'system.webServer/rewrite/rules'
+      $filter = "{0}/rule[@name='{1}']" -f $root, '{{ root_url }}'
+      Add-WebConfigurationProperty -PSPath $site -filter $root -name '.' -value @{name='{{ root_url }}'; patternSyntax='Regular Expresion'
+      Set-WebConfigurationProperty -PSPath $site -filter "$filter/match" -name 'url' -value $api_in
+      Set-WebConfigurationProperty -PSPath $site -filter "$filter/action" -name 'type' -value 'Rewrite'
+      Set-WebConfigurationProperty -PSPath $site -filter "$filter/action" -name 'url' -value $api_out
+
+      $list = @ {
+                  pspath = 'MACHINE/WEBROOT/APPHOST/UI'
+                  filter = "/system.webServer/rewrite/rules/rule{@name='adminUI'}/conditions"
+                Value = @ {
+                  input = "{REQUEST_URI}"
+                  pattern = '"{{ root_url }}/'
+                  negate = 'True'
+                }
+      }
+      Add-WebConfiguration @list
+
+    tags: url_rewrite
+
+  - name: starting "{{ api_name }}" app pool
+    win_iis_webapppool:
+      name: "{{ api_name }}"
+      state: started
+    tags: stop_app_pool
+  
+  - name: starting "{{ api_name }}" site
+    win_iis_website:
+      name: "{{ api_name }}" 
+      state: started
+    tags:  stop_site

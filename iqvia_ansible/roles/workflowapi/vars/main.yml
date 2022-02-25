@@ -1,0 +1,10 @@
+api_name: WorkflowAPI
+api_port: 8098
+api_version: "{{ WorkflowAPI_version }}"
+nexus_url: 'https://nexusdevops.dimensions-healthcare.net/repository/DevOps-Release/com/iqvia/mycare/WorkflowAPI/{{ api_version }}
+          /WorkflowAPI-{{ api_version }}-SNAPSHOT.gz'
+
+root_url: api
+api_evn: |
+  Add-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST/{{ api_name }}' -filter "system.webServer/aspNetCore/
+  environmentVaribles" -name "." -value @{name='ConnectionStrings_AdminDBConnection'; value='{{ DB_Connection_String }}'}

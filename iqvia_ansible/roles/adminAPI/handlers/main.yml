@@ -1,0 +1,29 @@
+---
+- name: stop app pool
+  win_iis_webapppool:
+    name: "{{ api_name }}"
+    state: stopped
+  ignore_errors: true
+  tags: stop_ap_pool
+
+- name: stop site
+  win_iis_website:
+    name: "{{ api_name }}"
+    state: stopped
+  ignore_errors: true
+  tags: stop_site
+
+- name: start app pool
+  win_iis_webapppool:
+    name: "{{ api_name }}"
+    state: started
+  ignore_errors: true
+  tags: start_app_ool
+
+-name: start site
+  win_iis_website:
+    name: "{{ api_name }}"
+    state: started
+  ignore_errors: true
+  tags: start_site
+  

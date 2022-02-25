@@ -1,0 +1,79 @@
+- name: Downloading {{ api_name }} tar ball
+  win_get_url:
+    url: "{{ nexus_url }}"
+    dest: '{{ backup }}\'
+    url_username: "{{ nexus_username }}"
+    url_password: "{{ nexus_password }}"
+  tags: "{{ api_name }}"
+  register: download
+
+- name: Checking the installation based on the change in tar file
+  debug: 
+    msg: This version is alredy installed. Skipping the installation part
+  when: download.changed == false
+
+- block:
+  - name: stopping UI app pool
+    win_iis_webapppool:
+      name: UI
+      state: stopped
+    ignore_errors: true 
+    tags: extract
+
+  - name: stopping UI site
+    win_iis_website
+      name: UI
+      state: stopped
+    ignore_errors: true 
+    tags: stop_site
+
+  - name: deleting contents inside "\Logger\UI" directoryto upgrade to newer version
+    win_shell: Remove-Item -R {{ base_dir }}\Logger\UI\{{ root_url }}
+    ignore_errors: true 
+
+  - name: extracting archive using 7z
+    win_command: "{{ item }}"
+    with_items:
+      - 7z x -y "{{ backup }}\{{ api_name }}-{{ api_version }}"
+      - 7z x -y "{{ backup }}\{{ api_name }}-{{ api_name }}"
+    tags: extract
+
+  - name: deleting the tar file
+    win_file:
+      name: "{{ item }}"
+      state: absent
+    with_items:
+ #     - {{ backup }}\{{ api_name }}-{{ api_version }}-SNAPSHOT.gz
+      - '{{ backup }}\{{ api_name }}-{{ api_name }}-{{ api_website }}-SNAPSHOT'
+
+  - name: Copying extracted files to "{{ base_dir }}\myCare\{{ api_version }}-SNAPSHOT'
+    win_shell: cp {{ backup }}\{{ api_name }}\publish\* {{ base_dir }}\myCARE\{{ api_name }} -Force -Recurse
+
+  - name: Removing extracted {{ api_name }} floder
+    win_shell: Remove-Item -R -Path {{ backup }}\{{ api_name }}
+  
+  - name: Changing permissions for IIS_IUSRS
+    win_acl:
+      path: '{{ base_dir }}\myCARE'
+      user: IIS_IUSRS
+      rights: FullControl
+      type: allow
+      state: present
+      inherit: ContainerInherit, ObjectInherit
+      proagation: 'None'
+
+  - name: Starting UI app pool
+    win_iis_webapppool:
+      name: UI
+      state: started
+    ignore_errors: true 
+    tags: start_app_pool
+  
+  - name: Starting UI site
+    win_iis_website:
+      name: UI
+      state: started
+    ignore_errors: true 
+    tags: start_site
+  
+  when: download.changed == true 
